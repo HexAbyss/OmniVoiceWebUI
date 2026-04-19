@@ -29,3 +29,9 @@ examples/exp*/
 *.wav
 *.jsonl
 push.sh
+omnivoice/
+examples/
+.github/
+docs/
+uv.lock
+pyproject.toml
