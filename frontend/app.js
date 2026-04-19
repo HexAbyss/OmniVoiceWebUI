@@ -260,7 +260,17 @@ class OmniVoiceApp {
 
   async init() {
     this._cacheElements();
+    this._restorePersistedState();
     this._setupEventListeners();
+
+    // Clear the text field at the start of every new browser session.
+    // sessionStorage is wiped when the tab/window is closed, so the field
+    // will be empty on a fresh visit but survive a same-session refresh.
+    if (!sessionStorage.getItem('ov_session_started')) {
+      sessionStorage.setItem('ov_session_started', '1');
+      this.$textInput.value = '';
+    }
+
     await Promise.all([
       this._checkHealth(),
       this._loadLanguages(),
@@ -346,6 +356,43 @@ class OmniVoiceApp {
   }
 
   // -------------------------------------------------------------------------
+  // Persist / restore UI state
+  // -------------------------------------------------------------------------
+
+  _restorePersistedState() {
+    // Mode tab
+    const savedMode = localStorage.getItem('ov_mode');
+    if (savedMode) this._setMode(savedMode);
+
+    // Language
+    const savedLang = localStorage.getItem('ov_lang');
+    if (savedLang !== null) this.$langInput.value = savedLang;
+
+    // Sliders (the dispatchEvents in _setupEventListeners will update their labels)
+    const savedSteps = localStorage.getItem('ov_steps');
+    if (savedSteps !== null) this.$stepsInput.value = savedSteps;
+
+    const savedSpeed = localStorage.getItem('ov_speed');
+    if (savedSpeed !== null) this.$speedInput.value = savedSpeed;
+
+    const savedCfg = localStorage.getItem('ov_cfg');
+    if (savedCfg !== null) this.$cfgInput.value = savedCfg;
+
+    const savedDuration = localStorage.getItem('ov_duration');
+    if (savedDuration !== null) this.$durationInput.value = savedDuration;
+
+    // Checkboxes
+    const savedDenoise = localStorage.getItem('ov_denoise');
+    if (savedDenoise !== null) this.$denoiseCheck.checked = savedDenoise === 'true';
+
+    const savedPreprocess = localStorage.getItem('ov_preprocess');
+    if (savedPreprocess !== null) this.$preprocessChk.checked = savedPreprocess === 'true';
+
+    const savedPostprocess = localStorage.getItem('ov_postprocess');
+    if (savedPostprocess !== null) this.$postprocessChk.checked = savedPostprocess === 'true';
+  }
+
+  // -------------------------------------------------------------------------
   // Event listeners
   // -------------------------------------------------------------------------
 
@@ -386,12 +433,15 @@ class OmniVoiceApp {
     // Range sliders
     this.$stepsInput.addEventListener('input', () => {
       this.$stepsValue.textContent = this.$stepsInput.value;
+      localStorage.setItem('ov_steps', this.$stepsInput.value);
     });
     this.$speedInput.addEventListener('input', () => {
       this.$speedValue.textContent = `${parseFloat(this.$speedInput.value).toFixed(2)}×`;
+      localStorage.setItem('ov_speed', this.$speedInput.value);
     });
     this.$cfgInput.addEventListener('input', () => {
       this.$cfgValue.textContent = parseFloat(this.$cfgInput.value).toFixed(1);
+      localStorage.setItem('ov_cfg', this.$cfgInput.value);
     });
 
     // Sync displayed values with the actual slider position.
@@ -400,6 +450,23 @@ class OmniVoiceApp {
     this.$stepsInput.dispatchEvent(new Event('input'));
     this.$speedInput.dispatchEvent(new Event('input'));
     this.$cfgInput.dispatchEvent(new Event('input'));
+
+    // Persist language, duration, and checkbox state
+    this.$langInput.addEventListener('change', () => {
+      localStorage.setItem('ov_lang', this.$langInput.value);
+    });
+    this.$durationInput.addEventListener('input', () => {
+      localStorage.setItem('ov_duration', this.$durationInput.value);
+    });
+    this.$denoiseCheck.addEventListener('change', () => {
+      localStorage.setItem('ov_denoise', this.$denoiseCheck.checked);
+    });
+    this.$preprocessChk.addEventListener('change', () => {
+      localStorage.setItem('ov_preprocess', this.$preprocessChk.checked);
+    });
+    this.$postprocessChk.addEventListener('change', () => {
+      localStorage.setItem('ov_postprocess', this.$postprocessChk.checked);
+    });
 
     // Generate
     this.$generateBtn.addEventListener('click', () => this._handleGenerate());
@@ -525,6 +592,7 @@ class OmniVoiceApp {
 
   _setMode(mode) {
     this.mode = mode;
+    localStorage.setItem('ov_mode', mode);
 
     this.$tabs.forEach(btn => {
       const active = btn.dataset.mode === mode;
@@ -622,12 +690,22 @@ class OmniVoiceApp {
 
       this._selectedAttrs[cat] = new Set();
 
+      // Restore saved selection for this category from localStorage
+      const savedAttr = localStorage.getItem(`ov_attr_${cat}`);
+
       options.forEach(opt => {
         const chip = document.createElement('button');
         chip.type        = 'button';
         chip.className   = 'attr-chip';
         chip.textContent = opt;
         chip.setAttribute('aria-pressed', 'false');
+
+        // Restore saved state
+        if (savedAttr === opt) {
+          chip.classList.add('selected');
+          chip.setAttribute('aria-pressed', 'true');
+          this._selectedAttrs[cat].add(opt);
+        }
 
         chip.addEventListener('click', () => {
           const wasSelected = chip.classList.contains('selected');
@@ -642,12 +720,18 @@ class OmniVoiceApp {
             chip.classList.add('selected');
             chip.setAttribute('aria-pressed', 'true');
             this._selectedAttrs[cat].add(opt);
+            localStorage.setItem(`ov_attr_${cat}`, opt);
+          } else {
+            localStorage.removeItem(`ov_attr_${cat}`);
           }
           this._updateInstructPreview();
         });
         chipsEl.appendChild(chip);
       });
     });
+
+    // Restore the instruction preview to match the restored chip selections
+    this._updateInstructPreview();
   }
 
   _updateInstructPreview() {
@@ -656,6 +740,12 @@ class OmniVoiceApp {
       set.forEach(v => parts.push(v));
     });
     this.$instructPrev.value = parts.join(', ');
+    // Persist the full instruction string so it survives page reloads
+    if (parts.length > 0) {
+      localStorage.setItem('ov_instruct_preview', this.$instructPrev.value);
+    } else {
+      localStorage.removeItem('ov_instruct_preview');
+    }
   }
 
   _buildInstructString() {

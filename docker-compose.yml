@@ -38,8 +38,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 180s   # model download on first run can take a few minutes
+      retries: 5
+      start_period: 600s   # first run downloads several GB from HuggingFace — allow up to 10 min
 
     # ---- GPU support (NVIDIA) ----
     deploy:
