@@ -1,0 +1,76 @@
+name: omnivoice
+
+# =============================================================================
+# Services
+# =============================================================================
+services:
+
+  # ---------------------------------------------------------------------------
+  # Backend — FastAPI + OmniVoice model
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: .                      # project root (needs omnivoice/ + pyproject.toml)
+      dockerfile: backend/Dockerfile
+      args:
+        TORCH_VARIANT: ${TORCH_VARIANT:-cu124}   # set to 'cpu' for CPU-only build
+    container_name: omnivoice-backend
+    restart: unless-stopped
+
+    environment:
+      OMNIVOICE_MODEL:  ${OMNIVOICE_MODEL:-k2-fsa/OmniVoice}
+      OMNIVOICE_DEVICE: ${OMNIVOICE_DEVICE:-auto}  # auto = CUDA > MPS > CPU
+      HF_HOME:          /cache/huggingface
+      # Optional — set to enable the "Enhance" punctuation button (OpenAI-compatible endpoint)
+      # OMNIVOICE_LLM_API_BASE: http://host.docker.internal:11434/v1  # e.g. Ollama
+      # OMNIVOICE_LLM_API_KEY:  sk-omnivoice
+      # OMNIVOICE_LLM_MODEL:    gpt-4o-mini
+
+    volumes:
+      # Persist downloaded HuggingFace model weights between container restarts
+      - hf-cache:/cache/huggingface
+
+    ports:
+      # Expose API directly on the host for debugging (optional — remove in production)
+      - "8501:8080"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s   # model download on first run can take a few minutes
+
+    # ---- GPU support (NVIDIA) ----
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ---------------------------------------------------------------------------
+  # Frontend — Nginx (static files + /api/ reverse proxy)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: omnivoice-frontend
+    restart: unless-stopped
+
+    ports:
+      - "8500:80"       # access the UI at http://localhost:8500
+
+    depends_on:
+      backend:
+        condition: service_healthy
+
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  hf-cache:
+    name: omnivoice-hf-cache

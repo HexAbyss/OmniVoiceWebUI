@@ -1,0 +1,35 @@
+# Build context for the backend is the project root.
+# Exclude anything that isn't needed to install/run the Python service.
+
+# Version control
+.git/
+.github/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Frontend (served by its own container)
+frontend/
+
+# Tests / evaluation artefacts
+*.log
+logs/

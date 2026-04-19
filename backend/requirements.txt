@@ -1,0 +1,6 @@
+# Extra dependencies for the OmniVoice REST API server
+# The main OmniVoice deps (torch, torchaudio, soundfile, etc.) are in pyproject.toml
+
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9

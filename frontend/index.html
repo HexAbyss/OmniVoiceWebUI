@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmniVoice — Multilingual TTS Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=5" />
+</head>
+<body>
+
+  <!-- ================================================================
+       HEADER
+  ================================================================= -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="18" cy="18" r="17" stroke="url(#lg)" stroke-width="2"/>
+          <path d="M11 18c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="url(#lg)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M8 18c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="url(#lg)" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+          <circle cx="18" cy="18" r="3" fill="url(#lg)"/>
+          <path d="M18 21v4" stroke="url(#lg)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M15 25h6" stroke="url(#lg)" stroke-width="2" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#7c3aed"/>
+              <stop offset="1" stop-color="#4f46e5"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="logo-text">
+          <span class="logo-name">OmniVoice</span>
+          <span class="logo-tagline">600+ Languages · Zero-Shot TTS</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Device switcher -->
+        <div id="device-switcher" class="device-switcher" role="group" aria-label="Inference device">
+          <button id="dev-btn-cpu"  class="device-btn" data-device="cpu"  title="CPU inference">CPU</button>
+          <button id="dev-btn-cuda" class="device-btn" data-device="cuda" title="GPU inference (CUDA)">GPU</button>
+        </div>
+        <div id="status-indicator" class="status-indicator status-loading" title="Checking server status…">
+          <span class="status-dot"></span>
+          <span id="status-label">Connecting…</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================================================================
+       MAIN
+  ================================================================= -->
+  <main class="main">
+
+    <!-- ---- Mode selector ---- -->
+    <nav class="mode-tabs" role="tablist" aria-label="Generation mode">
+      <button class="tab-btn active" data-mode="clone" role="tab" aria-selected="true" aria-controls="panel-clone">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M10 2a4 4 0 100 8 4 4 0 000-8zM4.172 11.172A4 4 0 011 14v1a5 5 0 005 5h8a5 5 0 005-5v-1a4 4 0 00-2.828-6.828" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Voice Cloning
+      </button>
+      <button class="tab-btn" data-mode="design" role="tab" aria-selected="false" aria-controls="panel-design">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.001z" fill="currentColor"/>
+        </svg>
+        Voice Design
+      </button>
+      <button class="tab-btn" data-mode="auto" role="tab" aria-selected="false" aria-controls="panel-auto">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" fill="currentColor"/>
+        </svg>
+        Auto Voice
+      </button>
+    </nav>
+
+    <!-- ---- Two-column layout ---- -->
+    <div class="studio-layout">
+
+      <!-- ============================================================
+           LEFT PANEL — Inputs
+      ============================================================= -->
+      <section class="panel panel-inputs" aria-label="Generation inputs">
+
+        <!-- Text input -->
+        <div class="field">
+          <label class="field-label" for="text-input">
+            Text to Synthesize
+            <span class="field-hint" id="char-count">0 chars</span>
+          </label>
+          <textarea
+            id="text-input"
+            class="textarea"
+            rows="5"
+            placeholder="Enter the text you want to convert to speech…"
+            spellcheck="true"
+            aria-describedby="char-count"
+          ></textarea>
+        </div>
+
+        <!-- Language selector -->
+        <div class="field">
+          <label class="field-label" for="language-input">
+            Language
+            <span class="field-hint">optional — leave empty to auto-detect</span>
+          </label>
+          <div class="language-wrap">
+            <svg class="language-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M7 2a1 1 0 011 1v1h3a1 1 0 110 2H9.578a18.87 18.87 0 01-1.724 4.078c.23.168.449.35.659.542l.03.03a1 1 0 01-1.414 1.414l-.03-.03a18.67 18.67 0 01-.659-.543 18.841 18.841 0 01-6.131 4.05 1 1 0 01-.713-1.87A16.841 16.841 0 003.63 11.5a17.003 17.003 0 01-1.73-2.91 1 1 0 111.86-.74 15 15 0 001.53 2.572 16.878 16.878 0 001.526-3.422H3a1 1 0 110-2h3V3a1 1 0 011-1zm6 6a1 1 0 01.894.553l2.991 5.982a.869.869 0 01.02.037l.99 1.98a1 1 0 11-1.79.895L15.383 16h-4.764l-.724 1.447a1 1 0 11-1.788-.894l.99-1.98.019-.038 2.99-5.982A1 1 0 0113 8zm-1.382 6h2.764L13 11.236 11.618 14z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="text"
+              id="language-input"
+              class="input input-with-icon"
+              list="languages-list"
+              placeholder="Auto (detect language)"
+              autocomplete="off"
+            />
+            <datalist id="languages-list"></datalist>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             MODE PANELS (only one visible at a time)
+        ========================================================== -->
+
+        <!-- Voice Cloning panel -->
+        <div id="panel-clone" class="mode-panel" role="tabpanel">
+          <div class="field">
+            <label class="field-label" for="ref-audio-input">
+              Reference Audio
+              <span class="field-hint">3–10 seconds recommended</span>
+            </label>
+            <div
+              id="drop-zone"
+              class="drop-zone"
+              tabindex="0"
+              role="button"
+              aria-label="Upload reference audio file"
+              aria-describedby="drop-zone-hint"
+            >
+              <svg class="drop-zone-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
+                <path d="M24 16v12M18 22l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16 32h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <p id="drop-zone-hint" class="drop-zone-label">
+                Drop an audio file here, or <span class="link-btn">click to browse</span>
+              </p>
+              <p class="drop-zone-hint">WAV, MP3, FLAC, OGG, M4A</p>
+              <input type="file" id="ref-audio-input" accept="audio/*" class="sr-only" tabindex="-1" />
+            </div>
+            <div id="ref-audio-preview" class="audio-preview hidden">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
+              </svg>
+              <span id="ref-audio-name" class="audio-preview-name">—</span>
+              <button id="remove-audio-btn" class="icon-btn" aria-label="Remove audio file" title="Remove">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="ref-text-input">
+              Reference Transcript
+              <span class="field-hint">optional — auto-transcribed if empty</span>
+            </label>
+            <input
+              type="text"
+              id="ref-text-input"
+              class="input"
+              placeholder="Leave blank to auto-transcribe with Whisper…"
+            />
+          </div>
+        </div>
+
+        <!-- Voice Design panel -->
+        <div id="panel-design" class="mode-panel hidden" role="tabpanel">
+          <p class="mode-desc">Select voice attributes — combine freely across categories.</p>
+
+          <!-- Gender -->
+          <div class="attr-group" id="attr-Gender">
+            <h4 class="attr-group-title">Gender</h4>
+            <div class="attr-chips" role="group" aria-label="Gender"></div>
+          </div>
+
+          <!-- Age -->
+          <div class="attr-group" id="attr-Age">
+            <h4 class="attr-group-title">Age</h4>
+            <div class="attr-chips" role="group" aria-label="Age"></div>
+          </div>
+
+          <!-- Pitch -->
+          <div class="attr-group" id="attr-Pitch">
+            <h4 class="attr-group-title">Pitch</h4>
+            <div class="attr-chips" role="group" aria-label="Pitch"></div>
+          </div>
+
+          <!-- Style -->
+          <div class="attr-group" id="attr-Style">
+            <h4 class="attr-group-title">Style</h4>
+            <div class="attr-chips" role="group" aria-label="Style"></div>
+          </div>
+
+          <!-- English Accent -->
+          <div class="attr-group" id="attr-English-Accent">
+            <h4 class="attr-group-title">
+              English Accent
+              <span class="attr-group-info">only effective for English speech</span>
+            </h4>
+            <div class="attr-chips" role="group" aria-label="English Accent"></div>
+          </div>
+
+          <!-- Chinese Dialect -->
+          <div class="attr-group" id="attr-Chinese-Dialect">
+            <h4 class="attr-group-title">
+              Chinese Dialect
+              <span class="attr-group-info">only effective for Chinese speech</span>
+            </h4>
+            <div class="attr-chips" role="group" aria-label="Chinese Dialect"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="instruct-preview">
+              Instruction Preview
+            </label>
+            <input
+              type="text"
+              id="instruct-preview"
+              class="input input-mono"
+              placeholder="(select attributes above or type freely)"
+              aria-live="polite"
+            />
+          </div>
+        </div>
+
+        <!-- Auto Voice panel -->
+        <div id="panel-auto" class="mode-panel hidden" role="tabpanel">
+          <div class="auto-voice-hint">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+            </svg>
+            <p>The model will automatically choose a voice. No reference audio or attributes needed — great for quick synthesis.</p>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             ADVANCED SETTINGS
+        ========================================================== -->
+        <details class="advanced-settings" id="advanced-settings">
+          <summary class="advanced-summary">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+            </svg>
+            Advanced Settings
+            <svg class="chevron" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </summary>
+
+          <div class="advanced-body">
+            <!-- Steps -->
+            <div class="field">
+              <div class="range-header">
+                <label class="field-label" for="steps-input">Inference Steps</label>
+                <span class="range-value" id="steps-value">32</span>
+              </div>
+              <input type="range" id="steps-input" class="range" min="4" max="64" value="32" step="1" />
+              <p class="field-hint">Lower = faster ↔ Higher = better quality</p>
+            </div>
+
+            <!-- Speed -->
+            <div class="field">
+              <div class="range-header">
+                <label class="field-label" for="speed-input">Speed</label>
+                <span class="range-value" id="speed-value">1.00×</span>
+              </div>
+              <input type="range" id="speed-input" class="range" min="0.5" max="2.0" value="1.0" step="0.05" />
+              <p class="field-hint">Ignored when Duration is set</p>
+            </div>
+
+            <!-- Duration -->
+            <div class="field">
+              <label class="field-label" for="duration-input">
+                Fixed Duration
+                <span class="field-hint">seconds — leave empty to use speed</span>
+              </label>
+              <input type="number" id="duration-input" class="input" min="0.1" step="0.5" placeholder="(auto)" />
+            </div>
+
+            <!-- CFG Scale -->
+            <div class="field">
+              <div class="range-header">
+                <label class="field-label" for="cfg-input">Guidance Scale (CFG)</label>
+                <span class="range-value" id="cfg-value">2.0</span>
+              </div>
+              <input type="range" id="cfg-input" class="range" min="0.0" max="4.0" value="2.0" step="0.1" />
+            </div>
+
+            <!-- Checkboxes -->
+            <div class="checkbox-row">
+              <label class="checkbox-label">
+                <input type="checkbox" id="denoise-check" checked />
+                <span class="checkbox-box"></span>
+                Denoise output
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="preprocess-check" checked />
+                <span class="checkbox-box"></span>
+                Preprocess reference
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="postprocess-check" checked />
+                <span class="checkbox-box"></span>
+                Postprocess output
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <!-- Generate button -->
+        <button id="generate-btn" class="generate-btn" type="button">
+          <span id="generate-btn-text">Generate Speech</span>
+          <svg id="generate-btn-spinner" class="spinner hidden" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="23.562" />
+          </svg>
+          <svg id="generate-btn-icon" class="btn-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+
+      </section>
+
+      <!-- ============================================================
+           RIGHT PANEL — Output
+      ============================================================= -->
+      <section class="panel panel-output" aria-label="Generated audio output">
+
+        <!-- Idle state -->
+        <div id="output-idle" class="output-state output-idle">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="40" cy="40" r="38" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4" opacity=".2"/>
+            <path d="M32 28a6 6 0 016 6v12a6 6 0 01-12 0V34a6 6 0 016-6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+            <path d="M25 40c0 7.732 3.134 14 7 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+            <path d="M55 40c0 7.732-3.134 14-7 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+            <path d="M48 28a6 6 0 016 6v12a6 6 0 01-12 0V34a6 6 0 016-6z" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+            <path d="M40 54v6M36 60h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".4"/>
+          </svg>
+          <p class="output-idle-text">Your generated audio will appear here</p>
+          <p class="output-idle-hint">Fill in the text and click Generate to start</p>
+        </div>
+
+        <!-- Generating/loading state -->
+        <div id="output-loading" class="output-state output-loading hidden">
+          <div class="loading-bars" aria-label="Generating audio…">
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+            <div class="loading-bar"></div>
+          </div>
+          <p id="loading-msg" class="loading-msg">Generating audio…</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="output-error" class="output-state output-error hidden">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+          </svg>
+          <p id="error-msg" class="error-msg">An error occurred.</p>
+          <button id="dismiss-error-btn" class="secondary-btn">Dismiss</button>
+        </div>
+
+        <!-- Success state -->
+        <div id="output-result" class="output-state output-result hidden">
+
+          <div class="waveform-wrap">
+            <canvas id="waveform-canvas" class="waveform-canvas" aria-label="Audio waveform visualisation"></canvas>
+            <div id="waveform-progress" class="waveform-progress"></div>
+          </div>
+
+          <div class="player-controls">
+            <button id="play-pause-btn" class="play-btn" aria-label="Play" title="Play / Pause">
+              <svg id="play-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+              </svg>
+              <svg id="pause-icon" viewBox="0 0 20 20" fill="currentColor" class="hidden">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm4-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+            </button>
+
+            <div class="player-time">
+              <span id="current-time">0:00</span>
+              <span class="time-sep">/</span>
+              <span id="total-time">0:00</span>
+            </div>
+          </div>
+
+          <audio id="audio-player" preload="auto"></audio>
+
+          <div class="result-actions">
+            <button id="download-btn" class="primary-btn" aria-label="Download generated audio">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+              Download WAV
+            </button>
+            <button id="regenerate-btn" class="secondary-btn" aria-label="Regenerate with same settings">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+              </svg>
+              Regenerate
+            </button>
+          </div>
+
+          <div id="result-meta" class="result-meta">
+            <span id="result-mode-badge" class="badge">—</span>
+            <span id="result-lang-badge" class="badge badge-secondary">—</span>
+          </div>
+
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- ================================================================
+       FOOTER
+  ================================================================= -->
+  <footer class="footer">
+    <p>OmniVoice — <a href="https://github.com/k2-fsa/OmniVoice" target="_blank" rel="noopener">k2-fsa/OmniVoice</a> · 600+ languages · Zero-shot TTS · <a href="https://arxiv.org/abs/2604.00688" target="_blank" rel="noopener">Paper</a></p>
+  </footer>
+
+  <script src="app.js?v=5" type="module"></script>
+</body>
+</html>
