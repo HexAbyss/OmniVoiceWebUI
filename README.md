@@ -1,6 +1,6 @@
-# OmniVoice Docker Wrapper
+# OmniVoiceWebUI
 
-This repository contains the container and interface stack for running the official OmniVoice model as a self-hosted service.
+This repository contains the deployment stack, frontend interface and Docker orchestration for running the official OmniVoice model as a self-hosted service.
 
 > This project is a wrapper for the official OmniVoice repository: [k2-fsa/OmniVoice](https://github.com/k2-fsa/OmniVoice).
 > The core model and original code are provided by that upstream repository.
@@ -22,8 +22,8 @@ Follow these steps to install and run the wrapper together with the official Omn
 1. Clone this wrapper repository:
 
 ```bash
-git clone <YOUR_INTERFACE_REPO_URL> OmniVoice
-cd OmniVoice
+git clone https://github.com/HexAbyss/OmniVoiceWebUI.git OmniVoiceWebUI
+cd OmniVoiceWebUI
 ```
 
 2. Clone the official OmniVoice repository separately:
@@ -46,7 +46,7 @@ cp ../OmniVoice-core/uv.lock ./
 4. Verify that your repository now has the following structure:
 
 ```
-OmniVoice/
+OmniVoiceWebUI/
 ├── .dockerignore
 ├── .gitignore
 ├── .github/
